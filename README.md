@@ -8,7 +8,7 @@ Loja demonstrativa em React e Spring Boot. O fluxo inclui catálogo, busca, filt
 - Backend: Java 17, Spring Boot 3, Spring Web, Spring Data JPA e Bean Validation.
 - Banco local: H2 em memória (os dados de demonstração são criados ao iniciar a API).
 - Banco para evolução: PostgreSQL, já incluído como dependência.
-- E-mail: Spring Mail via SMTP (compatível com o plano gratuito da Brevo).
+- E-mail: endpoint Spring Mail local e Supabase Edge Function para o site público, com Brevo.
 
 ## Executar localmente
 
@@ -35,9 +35,9 @@ Se a API não estiver ligada, a interface abre com catálogo demonstrativo e che
 
 ### Cadastro de e-mail
 
-O formulário envia o endereço para `POST /api/newsletter-subscriptions`. A API valida e salva o e-mail no banco e envia uma mensagem de boas-vindas pelo SMTP. Se o SMTP não estiver configurado ou o envio falhar, a API retorna erro e a tela não informa que o cadastro deu certo. A lista é persistida, mas campanhas futuras ainda precisam ser enviadas por uma ferramenta de marketing.
+Na execução local, o formulário envia o endereço para `POST /api/newsletter-subscriptions`; a API valida, salva o e-mail no banco e envia uma mensagem de boas-vindas pelo SMTP. No site público, o endpoint é uma Supabase Edge Function que grava a inscrição no Postgres protegido e envia a mensagem pela API da Brevo. Se o serviço de e-mail não estiver configurado ou o envio falhar, a tela não informa que deu certo. A lista é persistida, mas campanhas futuras ainda precisam ser enviadas por uma ferramenta de marketing.
 
-Para configurar com a [Brevo](https://www.brevo.com/pricing/), crie uma conta gratuita, habilite o SMTP transacional, confirme um remetente e defina estas variáveis no ambiente onde a API estiver hospedada:
+Para configurar o envio local com SMTP da [Brevo](https://www.brevo.com/pricing/), crie uma conta gratuita, habilite o envio transacional, confirme um remetente e defina estas variáveis no ambiente onde a API estiver hospedada:
 
 ```env
 SMTP_HOST=smtp-relay.brevo.com
@@ -47,7 +47,9 @@ SMTP_PASSWORD=sua-chave-smtp
 MAIL_FROM=seu-remetente-verificado@seudominio.com
 ```
 
-Não publique essas credenciais no repositório. Na versão local, elas podem ser definidas no ambiente antes de iniciar o backend ou adicionadas ao arquivo `.env` usado pelo Docker Compose. Para ativar o formulário no GitHub Pages, hospede a API, configure `VITE_API_URL` como uma variável de repositório do GitHub Actions apontando para `https://seu-servidor/api` e defina `CORS_ALLOWED_ORIGINS` no servidor com `https://matheuuspc.github.io`. O GitHub Pages hospeda apenas o frontend e não executa a API; sem essa hospedagem, o formulário permanece desativado na demonstração pública. A oferta gratuita da Brevo informa limite de 300 envios por dia; limites e disponibilidade podem mudar.
+O endpoint público já está hospedado em `https://mtjhddxqbhvlwtqbrdxf.supabase.co/functions/v1/newsletter-subscribe`. A função e a tabela foram criadas no projeto Supabase `vitrine-newsletter` (região São Paulo, plano Free); o banco usa RLS e não permite acesso público à tabela. A integração segue o guia atual de [Edge Function CORS](https://supabase.com/docs/guides/functions/cors).
+
+Para ativar o envio público, crie uma conta gratuita na Brevo, habilite o envio transacional e verifique o endereço remetente. Em seguida, no painel do projeto Supabase, em **Edge Functions → Secrets**, cadastre `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` e `BREVO_SENDER_NAME`. A função já recebe `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` do ambiente da Supabase. Não envie nem publique credenciais no repositório. Depois disso, altere `VITE_NEWSLETTER_ENABLED` para `true` no workflow `.github/workflows/pages.yml` e execute novamente o workflow do GitHub Pages. Até esses passos serem concluídos, o campo permanece desativado na demonstração pública. A oferta gratuita da Brevo informa limite de 300 envios por dia; limites e disponibilidade podem mudar.
 
 ### Executar a versão completa com Docker
 
