@@ -29,6 +29,7 @@ jobs:
         env:
           VITE_PAGES_BUILD: 'true'
           VITE_DEMO_MODE: 'true'
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
