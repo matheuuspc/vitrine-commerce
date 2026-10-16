@@ -49,7 +49,7 @@ MAIL_FROM=seu-remetente-verificado@seudominio.com
 
 O endpoint público já está hospedado em `https://mtjhddxqbhvlwtqbrdxf.supabase.co/functions/v1/newsletter-subscribe`. A função e a tabela foram criadas no projeto Supabase `vitrine-newsletter` (região São Paulo, plano Free); o banco usa RLS e não permite acesso público à tabela. A integração segue o guia atual de [Edge Function CORS](https://supabase.com/docs/guides/functions/cors).
 
-Para ativar o envio público, crie uma conta gratuita na Brevo, habilite o envio transacional e verifique o endereço remetente. Em seguida, no painel do projeto Supabase, em **Edge Functions → Secrets**, cadastre `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` e `BREVO_SENDER_NAME`. A função já recebe `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` do ambiente da Supabase. Não envie nem publique credenciais no repositório. Depois disso, altere `VITE_NEWSLETTER_ENABLED` para `true` no workflow `.github/workflows/pages.yml` e execute novamente o workflow do GitHub Pages. Até esses passos serem concluídos, o campo permanece desativado na demonstração pública. A oferta gratuita da Brevo informa limite de 300 envios por dia; limites e disponibilidade podem mudar.
+O cadastro público está ativo no GitHub Pages e o envio transacional foi testado com sucesso: o Brevo aceitou o e-mail de boas-vindas. A integração usa o endpoint Supabase acima e as chaves ficam somente em **Edge Functions → Secrets** (`BREVO_API_KEY`, `BREVO_SENDER_EMAIL` e `BREVO_SENDER_NAME`); `SUPABASE_URL` e `SUPABASE_SERVICE_ROLE_KEY` são fornecidos pelo ambiente Supabase. Não envie nem publique credenciais no repositório. O plano gratuito da Brevo informa limite de 300 envios por dia; limites e disponibilidade podem mudar.
 
 ### Executar a versão completa com Docker
 
