@@ -29,7 +29,8 @@ jobs:
         env:
           VITE_PAGES_BUILD: 'true'
           VITE_DEMO_MODE: 'true'
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_NEWSLETTER_URL: 'https://mtjhddxqbhvlwtqbrdxf.supabase.co/functions/v1/newsletter-subscribe'
+          VITE_NEWSLETTER_ENABLED: 'false'
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
