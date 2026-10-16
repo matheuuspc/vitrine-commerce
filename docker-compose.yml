@@ -20,6 +20,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/vitrine
       SPRING_DATASOURCE_USERNAME: vitrine
       SPRING_DATASOURCE_PASSWORD: vitrine-local
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173}
     ports:
       - "8080:8080"
     depends_on:
