@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Check, ChevronDown, CreditCard, Headphones, Heart, LockKeyhole, Menu, PackageCheck, Search, ShieldCheck, ShoppingCart, Sparkles, Star, Truck, UserRound, X, Minus, Plus, Trash2 } from 'lucide-react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
 const demoProducts = [
   { id: 1, name: 'Fone de Ouvido Bluetooth com Cancelamento de Ruído', category: 'Áudio', price: 299.90, stock: 12, rating: 4.8, reviews: 342, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=85', badge: 'Mais vendido' },
   { id: 2, name: 'Smartwatch Esportivo com GPS e Monitor de Saúde', category: 'Wearables', price: 499.90, stock: 8, rating: 4.7, reviews: 287, image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=85', badge: 'Novo' },
@@ -26,7 +27,7 @@ export default function App() {
   const [notice, setNotice] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
 
-  useEffect(() => { fetch(`${API}/products`).then(r => r.ok ? r.json() : Promise.reject()).then(setProducts).catch(() => {}) }, [])
+  useEffect(() => { if (!DEMO_MODE) fetch(`${API}/products`).then(r => r.ok ? r.json() : Promise.reject()).then(setProducts).catch(() => {}) }, [])
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 2800); return () => clearTimeout(timer) }, [notice])
   const categories = ['Todos', ...new Set(products.map(p => p.category))]
   const shown = useMemo(() => products.filter(p => (category === 'Todos' || p.category === category) && p.name.toLowerCase().includes(query.toLowerCase())), [products, category, query])
@@ -58,6 +59,11 @@ export default function App() {
     setLoading(true)
     const form = new FormData(event.currentTarget)
     const payload = { customerName: form.get('name'), customerEmail: form.get('email'), items: cart.map(line => ({ productId: line.product.id, quantity: line.quantity })) }
+    if (DEMO_MODE) {
+      setOrder({ id: `DEMO-${Date.now().toString().slice(-6)}`, customerName: payload.customerName, total: subtotal, status: 'CONFIRMED', demo: true })
+      setLoading(false)
+      return
+    }
     try {
       const response = await fetch(`${API}/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       if (!response.ok) { const body = await response.json().catch(() => ({})); throw new Error(body.message || 'Não foi possível concluir o pedido. Tente novamente.') }

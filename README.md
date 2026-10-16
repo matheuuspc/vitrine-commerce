@@ -36,6 +36,10 @@ Se a API não estiver ligada, a interface abre com catálogo demonstrativo e che
 
 Na raiz do projeto, rode `docker compose up --build` e acesse http://localhost:5173. O banco PostgreSQL mantém os dados entre reinicializações.
 
+### Demonstração pública
+
+O frontend em modo demonstração é publicado no GitHub Pages em https://matheuuspc.github.io/vitrine-commerce/. Nesse modo, o checkout gera um pedido fictício no navegador. Para persistir pedidos e atualizar o estoque no servidor, execute a versão completa com Docker.
+
 ## Como o estoque evita vendas acima do disponível
 
 O frontend usa o estoque para orientar a pessoa durante a compra, mas essa informação pode ficar desatualizada. No checkout, o backend agrupa unidades repetidas, adquire um bloqueio pessimista nas linhas de produto, em ordem estável, valida a quantidade dentro de uma transação e só então reduz o estoque e grava o pedido. Se duas compras disputarem as últimas unidades, a segunda espera a primeira transação e recebe HTTP 409 quando não houver saldo. Se qualquer etapa falhar, a transação reverte tanto o pedido quanto a baixa de estoque.
