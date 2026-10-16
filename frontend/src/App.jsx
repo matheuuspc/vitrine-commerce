@@ -3,6 +3,7 @@ import { ArrowRight, Check, ChevronDown, CreditCard, Headphones, Heart, LockKeyh
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
+const NEWSLETTER_DEMO_DISABLED = DEMO_MODE && !import.meta.env.VITE_API_URL
 const demoProducts = [
   { id: 1, name: 'Fone de Ouvido Bluetooth com Cancelamento de Ruído', category: 'Áudio', price: 299.90, stock: 12, rating: 4.8, reviews: 342, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=85', badge: 'Mais vendido' },
   { id: 2, name: 'Smartwatch Esportivo com GPS e Monitor de Saúde', category: 'Wearables', price: 499.90, stock: 8, rating: 4.7, reviews: 287, image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=85', badge: 'Novo' },
@@ -26,6 +27,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [notice, setNotice] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [newsletterLoading, setNewsletterLoading] = useState(false)
 
   useEffect(() => { if (!DEMO_MODE) fetch(`${API}/products`).then(r => r.ok ? r.json() : Promise.reject()).then(setProducts).catch(() => {}) }, [])
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(''), 2800); return () => clearTimeout(timer) }, [notice])
@@ -59,7 +61,7 @@ export default function App() {
     setLoading(true)
     const form = new FormData(event.currentTarget)
     const payload = { customerName: form.get('name'), customerEmail: form.get('email'), items: cart.map(line => ({ productId: line.product.id, quantity: line.quantity })) }
-    if (DEMO_MODE) {
+    if (NEWSLETTER_DEMO_DISABLED) {
       setOrder({ id: `DEMO-${Date.now().toString().slice(-6)}`, customerName: payload.customerName, total: subtotal, status: 'CONFIRMED', demo: true })
       setLoading(false)
       return
@@ -74,6 +76,31 @@ export default function App() {
         setOrder({ id: `DEMO-${Date.now().toString().slice(-6)}`, customerName: payload.customerName, total: subtotal, status: 'CONFIRMED', demo: true })
       } else setNotice(error.message)
     } finally { setLoading(false) }
+  }
+  async function subscribeNewsletter(event) {
+    event.preventDefault()
+    if (DEMO_MODE) {
+      setNotice('Cadastro por e-mail indisponível nesta demonstração. Consulte o GitHub para ativar a versão completa.')
+      return
+    }
+    setNewsletterLoading(true)
+    const form = event.currentTarget
+    const email = new FormData(form).get('newsletter-email')
+    try {
+      const response = await fetch(`${API}/newsletter-subscriptions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(body.message || 'Não foi possível cadastrar seu e-mail agora.')
+      form.reset()
+      setNotice(body.message || 'Cadastro realizado. Confira sua caixa de entrada.')
+    } catch (error) {
+      setNotice(error instanceof TypeError ? 'Não foi possível conectar ao serviço de e-mail. Tente novamente mais tarde.' : error.message)
+    } finally {
+      setNewsletterLoading(false)
+    }
   }
   function finishOrder() {
     setCart([]); setCheckoutOpen(false); setCartOpen(false); setOrder(null)
@@ -96,9 +123,9 @@ export default function App() {
         <div className="product-grid">{shown.map((product, index) => <article className="product-card" key={product.id}><div className="product-photo"><img src={product.image} alt={product.name} loading={index > 3 ? 'lazy' : 'eager'}/>{product.badge && <span className={product.stock === 0 ? 'product-badge sold-out' : 'product-badge'}>{product.badge}</span>}<button className="favorite-btn" aria-label="Adicionar aos favoritos"><Heart size={18}/></button></div><div className="product-info"><span className="product-category">{product.category}</span><h3>{product.name}</h3><div className="rating"><span className="stars">★★★★★</span><span>{product.rating?.toFixed(1)} <i>({product.reviews})</i></span></div><div className="price">{money(product.price)}</div><div className={product.stock === 0 ? 'stock out' : product.stock < 5 ? 'stock low' : 'stock'}><span/>{product.stock === 0 ? 'Avise-me quando voltar' : product.stock < 5 ? `Últimas ${product.stock} unidades` : `Em estoque · ${product.stock} unidades`}</div><button className="add-btn" disabled={product.stock === 0} onClick={() => add(product)}><ShoppingCart size={17}/>{product.stock === 0 ? 'Indisponível' : 'Adicionar ao carrinho'}</button></div></article>)}</div>
         {!shown.length && <div className="empty-results"><Search size={30}/><h3>Nenhum produto encontrado</h3><p>Tente buscar outro termo ou escolha uma categoria diferente.</p><button onClick={() => {setQuery(''); setCategory('Todos')}}>Limpar busca</button></div>}
       </section>
-      <section className="newsletter" id="ofertas"><div className="newsletter-icon"><Sparkles/></div><div><span className="eyebrow">BOAS NOVIDADES, SEM SPAM</span><h2>Seu próximo favorito<br/>pode estar a um e-mail.</h2><p>Receba lançamentos e ofertas especiais em primeira mão.</p></div><form onSubmit={e => {e.preventDefault(); setNotice('Pronto! Você entrou para a lista de novidades.') }}><input type="email" placeholder="Seu melhor e-mail" required/><button className="primary-btn">Quero receber <ArrowRight size={17}/></button><small>Ao se cadastrar, você concorda com nossa política de privacidade.</small></form></section>
+      <section className="newsletter" id="ofertas"><div className="newsletter-icon"><Sparkles/></div><div><span className="eyebrow">BOAS NOVIDADES, SEM SPAM</span><h2>Seu próximo favorito<br/>pode estar a um e-mail.</h2><p>Receba lançamentos e ofertas especiais em primeira mão.</p></div><form onSubmit={subscribeNewsletter}><input name="newsletter-email" type="email" placeholder="Seu melhor e-mail" required disabled={newsletterLoading || NEWSLETTER_DEMO_DISABLED}/><button className="primary-btn" disabled={newsletterLoading || NEWSLETTER_DEMO_DISABLED}>{newsletterLoading ? 'Enviando…' : <>Quero receber <ArrowRight size={17}/></>}</button><small>{NEWSLETTER_DEMO_DISABLED ? 'Cadastro por e-mail desativado nesta demonstração pública.' : 'Você receberá um e-mail de boas-vindas.'}</small></form></section>
     </main>
-    <footer><a className="brand" href="#inicio">VITRINE<span>.</span></a><p>Tecnologia para acompanhar você.</p><span>© 2026 Vitrine. Feito com cuidado.</span></footer>
+    <footer><a className="brand" href="#inicio">VITRINE<span>.</span></a><p>Tecnologia para acompanhar você.</p><span>© 2026 Vitrine.</span></footer>
     {notice && <div className="toast"><Check size={17}/>{notice}</div>}
     {cartOpen && <><button className="scrim" aria-label="Fechar carrinho" onClick={() => setCartOpen(false)}/><aside className="cart-drawer"><div className="drawer-head"><div><h2>Seu carrinho</h2><p>{count} {count === 1 ? 'produto' : 'produtos'}</p></div><button className="icon-btn" aria-label="Fechar" onClick={() => setCartOpen(false)}><X/></button></div>{cart.length ? <><div className="cart-lines">{cart.map(line => <div className="cart-line" key={line.product.id}><img src={line.product.image} alt=""/><div className="line-details"><h3>{line.product.name}</h3><b>{money(line.product.price)}</b><div className="quantity"><button aria-label="Diminuir" onClick={() => setQuantity(line.product.id, line.quantity - 1)}><Minus size={14}/></button><span>{line.quantity}</span><button aria-label="Aumentar" onClick={() => setQuantity(line.product.id, line.quantity + 1)}><Plus size={14}/></button></div></div><button className="remove-btn" aria-label="Remover produto" onClick={() => setQuantity(line.product.id, 0)}><Trash2 size={17}/></button></div>)}</div><div className="cart-bottom"><div className="subtotal"><span>Subtotal</span><b>{money(subtotal)}</b></div><p>Frete e impostos calculados na finalização.</p><button className="primary-btn checkout-btn" onClick={() => {setCartOpen(false); setCheckoutOpen(true)}}><LockKeyhole size={17}/> Finalizar pedido <ArrowRight size={18}/></button><div className="drawer-perks"><div><Truck/><span><b>Entrega para todo o Brasil</b><small>Receba no conforto da sua casa</small></span></div><div><ShieldCheck/><span><b>Compra segura</b><small>Seus dados protegidos</small></span></div><div><CreditCard/><span><b>Até 12x sem juros</b><small>Parcele suas compras com tranquilidade</small></span></div></div></div></> : <div className="empty-cart"><div className="empty-cart-icon"><ShoppingCart/></div><h3>Seu carrinho está vazio</h3><p>Tem tanta coisa boa esperando por você.</p><button className="primary-btn" onClick={() => setCartOpen(false)}>Explorar produtos <ArrowRight size={17}/></button></div>}</aside></>}
     {checkoutOpen && <><button className="scrim" aria-label="Fechar finalização" onClick={() => setCheckoutOpen(false)}/><div className="checkout-modal"><button className="icon-btn modal-close" onClick={() => setCheckoutOpen(false)} aria-label="Fechar"><X/></button>{order ? <div className="success-state"><div className="success-icon"><Check/></div><span className="eyebrow">PEDIDO CONFIRMADO</span><h2>Obrigado, {order.customerName.split(' ')[0]}!</h2><p>Seu pedido <b>#{order.id}</b> foi recebido. Você receberá atualizações por e-mail.</p><div className="order-summary"><span>Total do pedido</span><b>{money(order.total)}</b></div>{order.demo && <small className="demo-note">Modo demonstração: conecte a API para registrar o pedido.</small>}<button className="primary-btn" onClick={finishOrder}>Continuar comprando <ArrowRight size={17}/></button></div> : <><div className="checkout-title"><span className="eyebrow">SÓ MAIS UM PASSO</span><h2>Finalizar pedido</h2><p>Preencha seus dados para confirmar a compra.</p></div><form className="checkout-form" onSubmit={placeOrder}><label>Nome completo<input name="name" autoComplete="name" placeholder="Como podemos te chamar?" required minLength="2"/></label><label>E-mail<input name="email" type="email" autoComplete="email" placeholder="voce@email.com" required/></label><div className="checkout-total"><span>{count} {count === 1 ? 'produto' : 'produtos'}</span><b>{money(subtotal)}</b></div><button className="primary-btn checkout-submit" disabled={loading}>{loading ? 'Confirmando…' : <><LockKeyhole size={17}/> Confirmar pedido <ArrowRight size={17}/></>}</button><small className="secure-note"><ShieldCheck size={14}/> Seus dados são tratados com segurança.</small></form></>}</div></>}
