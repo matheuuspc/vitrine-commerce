@@ -81,7 +81,7 @@ export default function App() {
   }
   async function subscribeNewsletter(event) {
     event.preventDefault()
-    if (DEMO_MODE) {
+    if (NEWSLETTER_DEMO_DISABLED) {
       setNotice('Cadastro por e-mail indisponível nesta demonstração. Consulte o GitHub para ativar a versão completa.')
       return
     }
