@@ -66,6 +66,5 @@ Retorna HTTP 201 com o pedido criado. Dados inválidos retornam HTTP 400; estoqu
 - Paginação, ordenação e cadastro de produtos.
 - Histórico de pedidos e atualização das etapas de entrega.
 - Idempotência no checkout, trilha de auditoria e documentação OpenAPI.
-- Histórico de pedidos e atualização das etapas de entrega.
 
 O GitHub Actions executa o build do React e a suíte de testes do backend em cada pull request e envio para `main`. O teste de concorrência tenta consumir as mesmas unidades em duas compras simultâneas e confirma que apenas um pedido é aceito.
