@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Check, ChevronDown, CreditCard, Headphones, Heart, LockKeyhole, Menu, PackageCheck, Search, ShieldCheck, ShoppingCart, Sparkles, Star, Truck, UserRound, X, Minus, Plus, Trash2 } from 'lucide-react'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const NEWSLETTER_API = import.meta.env.VITE_NEWSLETTER_URL || `${API}/newsletter-subscriptions`
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true'
-const NEWSLETTER_DEMO_DISABLED = DEMO_MODE && !import.meta.env.VITE_API_URL
+const NEWSLETTER_CONFIGURED = import.meta.env.VITE_NEWSLETTER_ENABLED === 'true' && Boolean(import.meta.env.VITE_NEWSLETTER_URL)
+const NEWSLETTER_DEMO_DISABLED = DEMO_MODE && !NEWSLETTER_CONFIGURED
 const demoProducts = [
   { id: 1, name: 'Fone de Ouvido Bluetooth com Cancelamento de Ruído', category: 'Áudio', price: 299.90, stock: 12, rating: 4.8, reviews: 342, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=85', badge: 'Mais vendido' },
   { id: 2, name: 'Smartwatch Esportivo com GPS e Monitor de Saúde', category: 'Wearables', price: 499.90, stock: 8, rating: 4.7, reviews: 287, image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=900&q=85', badge: 'Novo' },
@@ -87,7 +89,7 @@ export default function App() {
     const form = event.currentTarget
     const email = new FormData(form).get('newsletter-email')
     try {
-      const response = await fetch(`${API}/newsletter-subscriptions`, {
+      const response = await fetch(NEWSLETTER_API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -123,7 +125,7 @@ export default function App() {
         <div className="product-grid">{shown.map((product, index) => <article className="product-card" key={product.id}><div className="product-photo"><img src={product.image} alt={product.name} loading={index > 3 ? 'lazy' : 'eager'}/>{product.badge && <span className={product.stock === 0 ? 'product-badge sold-out' : 'product-badge'}>{product.badge}</span>}<button className="favorite-btn" aria-label="Adicionar aos favoritos"><Heart size={18}/></button></div><div className="product-info"><span className="product-category">{product.category}</span><h3>{product.name}</h3><div className="rating"><span className="stars">★★★★★</span><span>{product.rating?.toFixed(1)} <i>({product.reviews})</i></span></div><div className="price">{money(product.price)}</div><div className={product.stock === 0 ? 'stock out' : product.stock < 5 ? 'stock low' : 'stock'}><span/>{product.stock === 0 ? 'Avise-me quando voltar' : product.stock < 5 ? `Últimas ${product.stock} unidades` : `Em estoque · ${product.stock} unidades`}</div><button className="add-btn" disabled={product.stock === 0} onClick={() => add(product)}><ShoppingCart size={17}/>{product.stock === 0 ? 'Indisponível' : 'Adicionar ao carrinho'}</button></div></article>)}</div>
         {!shown.length && <div className="empty-results"><Search size={30}/><h3>Nenhum produto encontrado</h3><p>Tente buscar outro termo ou escolha uma categoria diferente.</p><button onClick={() => {setQuery(''); setCategory('Todos')}}>Limpar busca</button></div>}
       </section>
-      <section className="newsletter" id="ofertas"><div className="newsletter-icon"><Sparkles/></div><div><span className="eyebrow">BOAS NOVIDADES, SEM SPAM</span><h2>Seu próximo favorito<br/>pode estar a um e-mail.</h2><p>Receba lançamentos e ofertas especiais em primeira mão.</p></div><form onSubmit={subscribeNewsletter}><input name="newsletter-email" type="email" placeholder="Seu melhor e-mail" required disabled={newsletterLoading || NEWSLETTER_DEMO_DISABLED}/><button className="primary-btn" disabled={newsletterLoading || NEWSLETTER_DEMO_DISABLED}>{newsletterLoading ? 'Enviando…' : <>Quero receber <ArrowRight size={17}/></>}</button><small>{NEWSLETTER_DEMO_DISABLED ? 'Cadastro por e-mail desativado nesta demonstração pública.' : 'Você receberá um e-mail de boas-vindas.'}</small></form></section>
+      <section className="newsletter" id="ofertas"><div className="newsletter-icon"><Sparkles/></div><div><span className="eyebrow">BOAS NOVIDADES, SEM SPAM</span><h2>Seu próximo favorito<br/>pode estar a um e-mail.</h2><p>Receba lançamentos e ofertas especiais em primeira mão.</p></div><form onSubmit={subscribeNewsletter}><input name="newsletter-email" type="email" placeholder="Seu melhor e-mail" required disabled={newsletterLoading || NEWSLETTER_DEMO_DISABLED}/><button className="primary-btn" disabled={newsletterLoading || NEWSLETTER_DEMO_DISABLED}>{newsletterLoading ? 'Enviando…' : <>Quero receber <ArrowRight size={17}/></>}</button><small>{NEWSLETTER_DEMO_DISABLED ? 'Cadastro por e-mail ainda não conectado nesta demonstração.' : 'Você receberá um e-mail de boas-vindas.'}</small></form></section>
     </main>
     <footer><a className="brand" href="#inicio">VITRINE<span>.</span></a><p>Tecnologia para acompanhar você.</p><span>© 2026 Vitrine.</span></footer>
     {notice && <div className="toast"><Check size={17}/>{notice}</div>}
